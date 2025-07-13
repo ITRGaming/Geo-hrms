@@ -40,7 +40,7 @@ services:
       # CRUCIAL for Expo Go to connect to the Metro Bundler inside Docker.
       # Replace YOUR_HOST_MACHINE_IP_ADDRESS_HERE with your actual local network IP (e.g., 192.168.1.5).
       # Your phone/emulator needs to reach this IP.
-      - REACT_NATIVE_PACKAGER_HOSTNAME=YOUR_HOST_MACHINE_IP_ADDRESS_HERE
+      - REACT_NATIVE_PACKAGER_HOSTNAME= 192.168.1.4 # Replace with your host machine's IP
     networks:
       - hrms-network
 
