@@ -11,7 +11,7 @@ COPY package.json package-lock.json ./
 RUN npm install
 
 # Install Expo CLI globally (Expo now recommends npx expo, but global CLI can be useful)
-RUN npm install --global expo-cli
+# RUN npm install --global expo-cli
 
 # Copy the rest of your app's source code
 COPY . .
@@ -23,4 +23,4 @@ EXPOSE 8081
 
 ENV REACT_NATIVE_PACKAGER_HOSTNAME=0.0.0.0
 
-CMD ["expo", "start", "--non-interactive", "--host", "0.0.0.0"]
+CMD ["npx", "expo", "start", "--non-interactive", "--host", "0.0.0.0"]
