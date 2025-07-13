@@ -1,0 +1,49 @@
+# geohrms-project/docker-compose.yml
+
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./hrms-backend # Path to your backend Dockerfile
+      dockerfile: Dockerfile
+    # Mount the source code for hot-reloading during development
+    volumes:
+      - ./hrms-backend:/app # Syncs your local backend code to the container
+      - /app/node_modules # Anonymous volume to prevent host's node_modules overwriting container's
+    ports:
+      - "5000:5000" # Map host port 5000 to container port 5000
+    environment:
+      # Inject DATABASE_URL from the .env file in the same directory as docker-compose.yml
+      # You MUST create a .env file in geohrms-project/
+      - DATABASE_URL=${DATABASE_URL}
+      # Add other environment variables needed by your backend
+      - NODE_ENV=development # Set for development environment
+    networks:
+      - hrms-network
+    # depends_on: # Uncomment if frontend needs backend to be ready first (e.g., for API calls)
+    #   - db # If you add a separate database service later
+    #   - backend # If frontend needs backend to be up before starting
+
+  frontend:
+    build:
+      context: ./hrms-frontend # Path to your frontend Dockerfile
+      dockerfile: Dockerfile
+    volumes:
+      - ./hrms-frontend:/app # Syncs your local frontend code to the container
+      - /app/node_modules # Anonymous volume
+    ports:
+      - "19000:19000" # Expo App Port
+      - "19001:19001" # Metro Bundler Port
+      - "8081:8081" # Common React Native development server port
+    environment:
+      # CRUCIAL for Expo Go to connect to the Metro Bundler inside Docker.
+      # Replace YOUR_HOST_MACHINE_IP_ADDRESS_HERE with your actual local network IP (e.g., 192.168.1.5).
+      # Your phone/emulator needs to reach this IP.
+      - REACT_NATIVE_PACKAGER_HOSTNAME=YOUR_HOST_MACHINE_IP_ADDRESS_HERE
+    networks:
+      - hrms-network
+
+networks:
+  hrms-network:
+    driver: bridge

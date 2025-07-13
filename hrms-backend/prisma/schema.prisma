@@ -1,0 +1,167 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// --- Core HRMS models ---
+model User {
+  id        String    @id @default(uuid()) // Unique ID for the user
+  username  String    @unique // Employee ID or login username
+  email     String    @unique // Employee's email
+  password  String    // Hashed password
+  role      UserRole  @default(EMPLOYEE) // Enum for EMPLOYEE, HR, ADMIN, etc.
+  firstName String
+  lastName  String
+  phone     String?
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Relationships
+  employeeProfile EmployeeProfile? // One-to-one relationship
+  attendanceRecords AttendanceRecord[] // One-to-many relationship
+  leaveRequests     LeaveRequest[]     // One-to-many relationship
+  salaryRecords     SalaryRecord[]     // One-to-many relationship
+}
+
+enum UserRole {
+  EMPLOYEE
+  HR
+  ADMIN
+}
+
+model EmployeeProfile {
+  id           String    @id @default(uuid())
+  userId       String    @unique // Foreign key to User
+  user         User      @relation(fields: [userId], references: [id])
+  dateOfBirth  DateTime?
+  address      String?
+  city         String?
+  state        String?
+  zipCode      String?
+  country      String?
+  dateOfJoining DateTime?
+  departmentId String? // Foreign key to Department
+  jobTitleId   String? // Foreign key to JobTitle
+  profilePictureUrl String? // URL to the selfie/profile picture
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  department Department? @relation(fields: [departmentId], references: [id])
+  jobTitle   JobTitle?   @relation(fields: [jobTitleId], references: [id])
+}
+
+model Department {
+  id        String          @id @default(uuid())
+  name      String          @unique
+  employees EmployeeProfile[]
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+}
+
+model JobTitle {
+  id        String          @id @default(uuid())
+  title     String          @unique
+  employees EmployeeProfile[]
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+}
+
+// --- Geo-Punch Attendance System Models ---
+
+model ApprovedLocation {
+  id        String     @id @default(uuid())
+  name      String     @unique // e.g., "Main Office", "Warehouse A"
+  latitude  Decimal    @map("lat") // Using @map to rename column in DB
+  longitude Decimal    @map("lon") // Using @map to rename column in DB
+  radius    Decimal    // Geofence radius in meters
+  isActive  Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  attendanceRecords AttendanceRecord[]
+}
+
+model AttendanceRecord {
+  id                String           @id @default(uuid())
+  userId            String           // Foreign key to User
+  user              User             @relation(fields: [userId], references: [id])
+  checkInTime       DateTime         @default(now())
+  checkOutTime      DateTime?
+  checkInLatitude   Decimal
+  checkInLongitude  Decimal
+  checkOutLatitude  Decimal?
+  checkOutLongitude Decimal?
+  checkInSelfieUrl  String?          // URL to the selfie taken at check-in
+  checkOutSelfieUrl String?          // URL to the selfie taken at check-out
+  status            AttendanceStatus // e.g., ON_TIME, LATE, ABSENT, EARLY_LEAVE
+  approvedLocationId String?         // Optional: which approved location they were at
+  approvedLocation  ApprovedLocation? @relation(fields: [approvedLocationId], references: [id])
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+}
+
+enum AttendanceStatus {
+  ON_TIME
+  LATE
+  EARLY_LEAVE
+  ABSENT // If no check-in/out for the day
+  ON_LEAVE // Employee is on approved leave
+  NOT_PUNCHED // For days when a punch was expected but not made (e.g. no leave applied)
+}
+
+model LeaveRequest {
+  id         String      @id @default(uuid())
+  userId     String      // Foreign key to User
+  user       User        @relation(fields: [userId], references: [id])
+  startDate  DateTime
+  endDate    DateTime
+  leaveType  LeaveType   // e.g., SICK, CASUAL, ANNUAL
+  reason     String?
+  status     LeaveStatus @default(PENDING) // PENDING, APPROVED, REJECTED
+  approvedBy String?     // ID of the HR/Admin who approved/rejected
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+}
+
+enum LeaveType {
+  SICK
+  CASUAL
+  ANNUAL
+  MATERNITY
+  PATERNITY
+  UNPAID
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+// --- Payroll/Salary (Simplified) ---
+
+model SalaryRecord {
+  id        String   @id @default(uuid())
+  userId    String   @unique // Foreign key to User
+  user      User     @relation(fields: [userId], references: [id])
+  baseSalary Decimal
+  // You can add more fields like allowances, deductions, last_reviewed_date etc.
+  allowances Decimal? // Optional allowances
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
