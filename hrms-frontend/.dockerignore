@@ -1,0 +1,20 @@
+# Node modules
+node_modules
+npm-debug.log
+
+# Expo specific files
+.expo/
+# If you build for web
+web-build/ 
+
+# Environment variables (sensitive info, don't commit to image)
+.env
+.env.*.local
+
+# Git related files
+.git
+.gitignore
+
+# OS generated files
+.DS_Store
+Thumbs.db
