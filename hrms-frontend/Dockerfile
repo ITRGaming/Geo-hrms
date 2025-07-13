@@ -16,6 +16,8 @@ RUN npm install
 # Copy the rest of your app's source code
 COPY . .
 
+ENV CI=1
+
 # Expose Expo's default ports
 EXPOSE 19000
 EXPOSE 19001
@@ -23,4 +25,4 @@ EXPOSE 8081
 
 ENV REACT_NATIVE_PACKAGER_HOSTNAME=0.0.0.0
 
-CMD ["npx", "expo", "start", "--non-interactive", "--host", "0.0.0.0"]
+CMD ["npx", "expo", "start"]
